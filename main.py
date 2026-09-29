@@ -213,6 +213,6 @@ def calcular():
     return jsonify({"avanco_graus": avanco})
 
 if __name__ == "__main__":
-    # Configuração de escuta obrigatória do Railway utilizando a variável de ambiente PORT
-    porta = int(os.environ.get("PORT", 5000))
+    # Configurado especificamente para a porta 8080 do Railway
+    porta = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=porta)
