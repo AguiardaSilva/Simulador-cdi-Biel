@@ -313,5 +313,105 @@ HTML_INTERFACE = """
                 rpmValue.innerText = rpm + " RPM (AUTO)";
                 slider.value = rpm;
             }
-            
             fetch(`/simular?rpm=${rpm}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('avanco').innerText = data.avanco + '°';
+                    document.getElementById('tempoVolta').innerText = data.tempo_volta + ' ms';
+                    document.getElementById('tempoEspera').innerText = data.tempo_espera + ' ms';
+                    document.getElementById('dwell').innerText = data.dwell + ' µs';
+
+                    const statusEl = document.getElementById('status');
+                    if (rpm >= 11000) {
+                        statusEl.innerText = 'LIMITADOR DE ROTAÇÃO';
+                        statusEl.className = 'status-badge status-limit';
+                    } else if (isAuto) {
+                        statusEl.innerText = 'MODO AUTOMÁTICO';
+                        statusEl.className = 'status-badge status-auto';
+                    } else {
+                        statusEl.innerText = 'MOTOR RODANDO';
+                        statusEl.className = 'status-badge status-running';
+                    }
+                })
+                .catch(error => console.error('Erro ao buscar telemetria:', error));
+        }
+
+        slider.addEventListener('input', () => {
+            if (modoAutomaticoAtivo) return;
+            const rpm = parseInt(slider.value);
+            requisitarTelemetria(rpm);
+        });
+
+        btnTrigger.addEventListener('click', () => {
+            if (modoAutomaticoAtivo) {
+                clearInterval(autoInterval);
+                modoAutomaticoAtivo = false;
+                btnTrigger.innerText = 'Iniciar Puxada 🏁';
+                btnTrigger.classList.remove('stop');
+                return;
+            }
+
+            const rpmInit = parseInt(document.getElementById('rpmInit').value);
+            const rpmEnd = parseInt(document.getElementById('rpmEnd').value);
+            const runTime = parseFloat(document.getElementById('runTime').value) * 1000;
+            const steps = 50;
+            const stepInterval = runTime / steps;
+            let currentStep = 0;
+
+            modoAutomaticoAtivo = true;
+            btnTrigger.innerText = 'Parar Puxada ⏹';
+            btnTrigger.classList.add('stop');
+
+            autoInterval = setInterval(() => {
+                currentStep++;
+                const progress = currentStep / steps;
+                const rpm = Math.round(rpmInit + (rpmEnd - rpmInit) * progress);
+                requisitarTelemetria(rpm, true);
+
+                if (currentStep >= steps) {
+                    clearInterval(autoInterval);
+                    modoAutomaticoAtivo = false;
+                    btnTrigger.innerText = 'Iniciar Puxada 🏁';
+                    btnTrigger.classList.remove('stop');
+                }
+            }, stepInterval);
+        });
+
+        requisitarTelemetria(50);
+    </script>
+</body>
+</html>
+"""
+
+@app.route('/')
+def index():
+    return render_template_string(HTML_INTERFACE)
+
+
+@app.route('/simular')
+def simular():
+    rpm = request.args.get('rpm', default=1000, type=int)
+    if rpm > MAX_RPM:
+        rpm = MAX_RPM
+    if rpm < 0:
+        rpm = 0
+
+    avanco = get_advance_from_map(rpm)
+
+    # Tempo de uma volta do motor (ms), baseado no RPM
+    tempo_volta = (60000.0 / rpm) if rpm > 0 else 0
+
+    # Tempo de espera até o ponto de ignição, baseado no avanço calculado
+    tempo_espera = (avanco / 360.0) * tempo_volta
+
+    return jsonify({
+        'avanco': round(avanco, 2),
+        'tempo_volta': round(tempo_volta, 3),
+        'tempo_espera': round(tempo_espera, 3),
+        'dwell': DWELL_US
+    })
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
