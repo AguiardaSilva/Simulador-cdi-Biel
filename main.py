@@ -34,6 +34,7 @@ HTML_INTERFACE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador CDI - Protótipo Arrancada 2T</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -82,6 +83,40 @@ HTML_INTERFACE = """
             width: 92%;
             max-width: 550px;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(88, 166, 255, 0.05);
+        }
+
+        .container.with-charts {
+            max-width: 900px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        @media (min-width: 760px) {
+            .charts-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .chart-panel {
+            background: rgba(1, 4, 9, 0.7);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #30363d;
+        }
+
+        .chart-panel h2 {
+            margin-bottom: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 220px;
         }
 
         h1 {
@@ -240,7 +275,7 @@ HTML_INTERFACE = """
 </head>
 <body>
 
-    <div class="container">
+    <div class="container with-charts">
         <h1>Biel CDI Drag-Sim</h1>
         
         <!-- MODO MANUAL -->
@@ -296,15 +331,103 @@ HTML_INTERFACE = """
                 <span class="value" id="dwell">--</span>
             </div>
         </div>
+
+        <!-- GRÁFICOS EM TEMPO REAL -->
+        <div class="charts-grid">
+            <div class="chart-panel">
+                <h2>RPM x Tempo</h2>
+                <div class="chart-wrapper">
+                    <canvas id="rpmChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-panel">
+                <h2>Avanço (°) x Tempo</h2>
+                <div class="chart-wrapper">
+                    <canvas id="advanceChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const slider = document.getElementById('rpmSlider');
         const rpmValue = document.getElementById('rpmValue');
         const btnTrigger = document.getElementById('btnTrigger');
-        
+
         let autoInterval = null;
         let modoAutomaticoAtivo = false;
+
+        // Janela deslizante de pontos exibidos em cada gráfico
+        const MAX_POINTS = 40;
+
+        const rpmChartCtx = document.getElementById('rpmChart').getContext('2d');
+        const advanceChartCtx = document.getElementById('advanceChart').getContext('2d');
+
+        function criarConfigGrafico(label, corBorda, corFundo) {
+            return {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: label,
+                        data: [],
+                        borderColor: corBorda,
+                        backgroundColor: corFundo,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Tempo (s)', color: '#8b949e' },
+                            ticks: { color: '#8b949e', maxTicksLimit: 8 },
+                            grid: { color: 'rgba(48, 54, 61, 0.5)' }
+                        },
+                        y: {
+                            title: { display: true, text: label, color: '#8b949e' },
+                            ticks: { color: '#8b949e' },
+                            grid: { color: 'rgba(48, 54, 61, 0.5)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#c9d1d9' } }
+                    }
+                }
+            };
+        }
+
+        const rpmChart = new Chart(rpmChartCtx, criarConfigGrafico('RPM', '#58a6ff', 'rgba(88, 166, 255, 0.15)'));
+        const advanceChart = new Chart(advanceChartCtx, criarConfigGrafico('Avanço (°)', '#f0883e', 'rgba(240, 136, 62, 0.15)'));
+
+        // Marca de tempo (segundos) referente ao início da sessão/gráfico atual
+        let tempoInicioGrafico = null;
+
+        function resetarGraficos() {
+            tempoInicioGrafico = null;
+            [rpmChart, advanceChart].forEach(chart => {
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+                chart.update();
+            });
+        }
+
+        function adicionarPontoGrafico(chart, valor, tempoLabel) {
+            chart.data.labels.push(tempoLabel);
+            chart.data.datasets[0].data.push(valor);
+
+            if (chart.data.labels.length > MAX_POINTS) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update('none');
+        }
 
         function requisitarTelemetria(rpm, isAuto = false) {
             if (!isAuto) {
@@ -313,6 +436,13 @@ HTML_INTERFACE = """
                 rpmValue.innerText = rpm + " RPM (AUTO)";
                 slider.value = rpm;
             }
+
+            const agora = performance.now();
+            if (tempoInicioGrafico === null) {
+                tempoInicioGrafico = agora;
+            }
+            const tempoDecorridoSeg = ((agora - tempoInicioGrafico) / 1000).toFixed(2);
+
             fetch(`/simular?rpm=${rpm}`)
                 .then(response => response.json())
                 .then(data => {
@@ -320,6 +450,9 @@ HTML_INTERFACE = """
                     document.getElementById('tempoVolta').innerText = data.tempo_volta + ' ms';
                     document.getElementById('tempoEspera').innerText = data.tempo_espera + ' ms';
                     document.getElementById('dwell').innerText = data.dwell + ' µs';
+
+                    adicionarPontoGrafico(rpmChart, rpm, tempoDecorridoSeg);
+                    adicionarPontoGrafico(advanceChart, data.avanco, tempoDecorridoSeg);
 
                     const statusEl = document.getElementById('status');
                     if (rpm >= 11000) {
@@ -357,6 +490,8 @@ HTML_INTERFACE = """
             const steps = 50;
             const stepInterval = runTime / steps;
             let currentStep = 0;
+
+            resetarGraficos();
 
             modoAutomaticoAtivo = true;
             btnTrigger.innerText = 'Parar Puxada ⏹';
