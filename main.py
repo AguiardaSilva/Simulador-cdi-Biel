@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template_string
 import os
 
 app = Flask(__name__)
@@ -24,6 +24,17 @@ def get_advance_from_map(rpm):
             return advanceMap[i] + ratio * (advanceMap[i+1] - advanceMap[i])
     return advanceMap[0]
 
+# ROTA DA PÁGINA INICIAL (Resolve o erro 404)
+@app.route('/', methods=['GET'])
+def pagina_inicial():
+    return jsonify({
+        "status": "ONLINE",
+        "projeto": "Simulador CDI - Biel",
+        "mensagem": "O servidor está rodando perfeitamente!",
+        "como_testar": "Adicione '/simular?rpm=3000' ao final da URL no seu navegador para ver os cálculos."
+    })
+
+# ROTA DO SIMULADOR
 @app.route('/simular', methods=['GET'])
 def simular_ignicao():
     # Obtém o RPM enviado pela URL (Ex: /simular?rpm=3500)
@@ -36,8 +47,12 @@ def simular_ignicao():
     if rpm >= MAX_RPM:
         return jsonify({"status": "LIMITADOR ATIVO", "ignicao": False, "rpm": rpm, "motivo": "Giro Máximo Excedido"})
 
+    # Evita divisão por zero caso o RPM venha zerado ou negativo
+    if rpm <= 0:
+        return jsonify({"status": "MOTOR DESLIGADO", "ignicao": False, "rpm": rpm})
+
     # Calcula tempo de 1 volta em microssegundos (60M / RPM)
-    periodo_us = 60000000 / rpm if rpm > 0 else 0
+    periodo_us = 60000000 / rpm
     avanco_graus = get_advance_from_map(rpm)
     
     # Conversão de graus para tempo
