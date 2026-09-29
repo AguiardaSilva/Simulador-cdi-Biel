@@ -1,9 +1,60 @@
+from flask import Flask, jsonify, request
+import os
+
+app = Flask(__name__)
+
+# CONFIGURAÇÕES REPLICADAS DO ESP32
+DWELL_US = 3000
+MAX_RPM = 11000
+
+# BANCO DE DADOS DE MAPAS PARA MOTOR 2T 190cc (ARRANCADA)
+MAPAS_COMBUSTIVEL = {
+    "gasolina": {
+        "rpm":,
+        "avanco": [15.0, 24.0, 26.0, 25.0, 20.0, 16.0]
+    },
+    "etanol": {
+        "rpm":,
+        "avanco": [16.0, 26.0, 29.0, 28.0, 23.0, 19.0]
+    },
+    "metanol": {
+        "rpm":,
+        "avanco": [16.0, 26.0, 30.0, 29.0, 24.0, 20.0]
+    },
+    "nitrometano": {
+        "rpm":,
+        "avanco": [14.0, 22.0, 25.0, 24.0, 18.0, 14.0]
+    }
+}
+
+def get_advance_from_map(rpm, combustivel):
+    mapa = MAPAS_COMBUSTIVEL.get(combustivel, MAPAS_COMBUSTIVEL["gasolina"])
+    rpmMap = mapa["rpm"]
+    advanceMap = mapa["avanco"]
+
+    # Proteção para rotações abaixo do mínimo do mapa
+    if rpm <= rpmMap[0]:
+        return advanceMap[0]
+    # Proteção para rotações acima do máximo do mapa
+    if rpm >= rpmMap[-1]:
+        return advanceMap[-1]
+        
+    for i in range(len(rpmMap) - 1):
+        if rpmMap[i] <= rpm <= rpmMap[i+1]:
+            # Interpolação linear idêntica ao algoritmo em C++ do ESP32
+            ratio = (rpm - rpmMap[i]) / (rpmMap[i+1] - rpmMap[i])
+            return advanceMap[i] + ratio * (advanceMap[i+1] - advanceMap[i])
+    return advanceMap[0]
+
+# INTERFACE INTERATIVA INTEGRADA SEGURA
+HTML_INTERFACE = '''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-title = "<title>Simulador CDI - Protótipo Arrancada 2T</title>"
+    <title>Simulador CDI - Protótipo Arrancada 2T</title>
+    <script src="https://jsdelivr.net"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -306,30 +357,3 @@ title = "<title>Simulador CDI - Protótipo Arrancada 2T</title>"
         }
 
         .fuel-btn:hover {
-            border-color: #8b949e;
-            color: #c9d1d9;
-        }
-
-        .fuel-btn.active[data-fuel="gasolina"] { background: rgba(240, 136, 62, 0.15); border-color: #f0883e; color: #f0883e; box-shadow: 0 0 12px rgba(240,136,62,0.2); }
-        .fuel-btn.active[data-fuel="etanol"] { background: rgba(88, 166, 255, 0.15); border-color: #58a6ff; color: #58a6ff; box-shadow: 0 0 12px rgba(88,166,255,0.2); }
-        .fuel-btn.active[data-fuel="metanol"] { background: rgba(53, 194, 91, 0.15); border-color: #35c25b; color: #35c25b; box-shadow: 0 0 12px rgba(53,194,91,0.2); }
-        .fuel-btn.active[data-fuel="nitrometano"] { background: rgba(218, 54, 51, 0.15); border-color: #da3633; color: #da3633; box-shadow: 0 0 12px rgba(218,54,51,0.2); }
-    </style>
-</head>
-<body>
-
-    <div class="container with-charts">
-        <h1>Biel CDI Drag-Sim</h1>
-        
-        <div class="panel">
-            <h2>Combustível Alvo (Parâmetros 2T)</h2>
-            <div class="fuel-selector">
-                <button class="fuel-btn active" data-fuel="gasolina" onclick="selecionarCombustivel('gasolina')">
-                    <span class="icon">⛽</span>
-                    <span>Gasolina</span>
-                </button>
-                <button class="fuel-btn" data-fuel="etanol" onclick="selecionarCombustivel('etanol')">
-                    <span class="icon">🌽</span>
-                    <span>Etanol</span>
-                </button>
-                <button class="fuel-btn" data-fuel="metanol" onclick="selecionarCombustivel('metanol')">
