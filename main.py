@@ -30,7 +30,7 @@ HTML_INTERFACE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador CDI - Motor 2T</title>
+    <title>Simulador CDI - Protótipo Arrancada 2T</title>
     <style>
         * {
             box-sizing: border-box;
@@ -40,115 +40,184 @@ HTML_INTERFACE = """
         }
 
         body {
-            background-color: #0d1117;
+            background-color: #0b0e14;
             color: #c9d1d9;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            padding: 20px 0;
+            overflow-y: auto;
             position: relative;
         }
 
-        /* Imagem de fundo do motor 2T translúcido */
+        /* Imagem de fundo: Protótipo de Arrancada Técnico/Translucido */
         body::before {
             content: "";
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://unsplash.com');
-            background-size: cover;
+            background-image: url('https://freepik.com');
+            background-size: contain;
+            background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.12; /* Deixa o fundo meio translúcido */
+            opacity: 0.09; /* Totalmente translúcido e discreto */
             z-index: 1;
+            pointer-events: none;
         }
 
         .container {
             position: relative;
             z-index: 2;
-            background: rgba(22, 27, 34, 0.85);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(48, 54, 61, 0.8);
-            border-radius: 16px;
+            background: rgba(17, 22, 30, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 139, 253, 0.2);
+            border-radius: 20px;
             padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 92%;
+            max-width: 550px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(88, 166, 255, 0.05);
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: #58a6ff;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: #f0883e;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-left: 3px solid #f0883e;
+            padding-left: 8px;
+        }
+
+        .panel {
+            background: rgba(30, 37, 48, 0.5);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
         }
 
         .control-group {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            font-size: 1rem;
+            font-size: 0.9rem;
             margin-bottom: 8px;
             color: #8b949e;
         }
 
         .rpm-display {
-            font-size: 2rem;
+            font-size: 2.4rem;
             font-weight: bold;
             color: #58a6ff;
             text-align: center;
-            margin-bottom: 10px;
-            font-family: monospace;
+            margin-bottom: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            text-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
         }
 
         input[type="range"] {
             width: 100%;
             height: 8px;
             border-radius: 5px;
-            background: #30363d;
+            background: #21262d;
             outline: none;
             -webkit-appearance: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background: #58a6ff;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+            box-shadow: 0 0 12px rgba(88, 166, 255, 0.6);
+            transition: transform 0.1s;
         }
 
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.2);
+        }
+
+        /* Grid inputs modo automático */
+        .auto-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-field input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px;
+            color: #c9d1d9;
+            text-align: center;
+            font-size: 1rem;
+            font-family: monospace;
+        }
+
+        .input-field input:focus {
+            border-color: #58a6ff;
+            outline: none;
+        }
+
+        .btn {
+            width: 100%;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:hover { background: #2ea043; }
+        .btn:active { transform: scale(0.98); }
+        .btn.stop { background: #da3633; }
+        .btn.stop:hover { background: #f85149; }
+
+        /* Resultados */
         .results {
-            background: rgba(1, 4, 9, 0.6);
-            border-radius: 8px;
-            padding: 15px;
+            background: rgba(1, 4, 9, 0.7);
+            border-radius: 12px;
+            padding: 20px;
             border: 1px solid #30363d;
         }
 
         .result-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         .result-item:last-child {
             border-bottom: none;
         }
 
-        .label {
-            color: #8b949e;
-        }
-
+        .label { color: #8b949e; }
         .value {
             font-weight: bold;
             color: #f0883e;
@@ -157,34 +226,60 @@ HTML_INTERFACE = """
 
         .status-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 0.8rem;
             font-weight: bold;
         }
         
-        .status-running { background: #238636; color: white; }
-        .status-limit { background: #da3633; color: white; }
+        .status-running { background: #238636; color: white; box-shadow: 0 0 10px rgba(35,134,54,0.4); }
+        .status-limit { background: #da3633; color: white; box-shadow: 0 0 10px rgba(218,54,51,0.4); }
+        .status-auto { background: #8957e5; color: white; box-shadow: 0 0 10px rgba(137,87,229,0.4); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Simulador CDI (2 Tempos)</h1>
+        <h1>Biel CDI Drag-Sim</h1>
         
-        <div class="control-group">
-            <label for="rpmSlider">Controle de Giro (RPM):</label>
-            <div class="rpm-display" id="rpmValue">1000 RPM</div>
-            <input type="range" id="rpmSlider" min="500" max="12000" step="100" value="1000">
+        <!-- MODO MANUAL -->
+        <div class="panel">
+            <h2>Controle Manual</h2>
+            <div class="control-group">
+                <div class="rpm-display" id="rpmValue">50 RPM</div>
+                <input type="range" id="rpmSlider" min="50" max="12000" step="50" value="50">
+            </div>
         </div>
 
+        <!-- MODO ACELERAÇÃO AUTOMÁTICA -->
+        <div class="panel">
+            <h2>Modo Puxada (Automático)</h2>
+            <div class="auto-grid">
+                <div class="input-field">
+                    <label>Giro Inicial (RPM)</label>
+                    <input type="number" id="rpmInit" value="2000" min="50" max="12000">
+                </div>
+                <div class="input-field">
+                    <label>Tempo (Segundos)</label>
+                    <input type="number" id="runTime" value="5" min="1" max="30" step="0.5">
+                </div>
+                <div class="input-field">
+                    <label>Giro Final (RPM)</label>
+                    <input type="number" id="rpmEnd" value="11500" min="50" max="12000">
+                </div>
+            </div>
+            <button class="btn" id="btnTrigger">Iniciar Puxada 🏁</button>
+        </div>
+
+        <!-- MONITOR DE DADOS -->
         <div class="results">
+            <h2>Telemetria em Tempo Real</h2>
             <div class="result-item">
-                <span class="label">Status do Motor:</span>
+                <span class="label">Estado do Sistema:</span>
                 <span id="status" class="status-badge status-running">MOTOR RODANDO</span>
             </div>
             <div class="result-item">
-                <span class="label">Avanço Calculado:</span>
+                <span class="label">Avanço da Ignição:</span>
                 <span class="value" id="avanco">--</span>
             </div>
             <div class="result-item">
@@ -192,11 +287,11 @@ HTML_INTERFACE = """
                 <span class="value" id="tempoVolta">--</span>
             </div>
             <div class="result-item">
-                <span class="label">Espera da Ignição:</span>
+                <span class="label">Tempo de Atraso (Espera):</span>
                 <span class="value" id="tempoEspera">--</span>
             </div>
             <div class="result-item">
-                <span class="label">Dwell (Carga Bobina):</span>
+                <span class="label">Tempo de Carga (Dwell):</span>
                 <span class="value" id="dwell">--</span>
             </div>
         </div>
@@ -205,82 +300,19 @@ HTML_INTERFACE = """
     <script>
         const slider = document.getElementById('rpmSlider');
         const rpmValue = document.getElementById('rpmValue');
+        const btnTrigger = document.getElementById('btnTrigger');
         
-        function atualizarDados(rpm) {
-            rpmValue.innerText = rpm + " RPM";
+        let autoInterval = null;
+        let modoAutomaticoAtivo = false;
+
+        function requisitarTelemetria(rpm, isAuto = false) {
+            if (!isAuto) {
+                rpmValue.innerText = rpm + " RPM";
+            } else {
+                rpmValue.innerText = rpm + " RPM (AUTO)";
+                slider.value = rpm;
+            }
             
-            // Faz a requisição em tempo real para a sua rota de simulação
             fetch(`/simular?rpm=${rpm}`)
                 .then(response => response.json())
                 .then(data => {
-                    const statusEl = document.getElementById('status');
-                    statusEl.innerText = data.status;
-                    
-                    if (data.status === "LIMITADOR ATIVO") {
-                        statusEl.className = "status-badge status-limit";
-                        document.getElementById('avanco').innerText = "CORTE";
-                        document.getElementById('tempoVolta').innerText = "-------";
-                        document.getElementById('tempoEspera').innerText = "-------";
-                        document.getElementById('dwell').innerText = "-------";
-                    } else {
-                        statusEl.className = "status-badge status-running";
-                        document.getElementById('avanco').innerText = data.avanco_calculado_graus + "°";
-                        document.getElementById('tempoVolta').innerText = data.tempo_de_uma_volta_us + " µs";
-                        document.getElementById('tempoEspera').innerText = data.tempo_espera_ignicao_us + " µs";
-                        document.getElementById('dwell').innerText = data.tempo_carga_bobina_dwell_us + " µs";
-                    }
-                });
-        }
-
-        // Escuta as mudanças no controle deslizante
-        slider.addEventListener('input', (e) => atualizarDados(e.target.value));
-        
-        // Carrega os dados iniciais
-        atualizarDados(slider.value);
-    </script>
-</body>
-</html>
-"""
-
-# AGORA A PÁGINA INICIAL RETORNA A INTERFACE VISUAL
-@app.route('/', methods=['GET'])
-def pagina_inicial():
-    return render_template_string(HTML_INTERFACE)
-
-# ROTA DO SIMULADOR (Continua igual para servir os dados ao HTML)
-@app.route('/simular', methods=['GET'])
-def simular_ignicao():
-    rpm = request.args.get('rpm', default=1000, type=int)
-    kill_switch = request.args.get('kill', default='false', type=str).lower() == 'true'
-
-    if kill_switch:
-        return jsonify({"status": "CORTE ATIVADO", "ignicao": False, "motivo": "Kill Switch Pressionado"})
-
-    if rpm >= MAX_RPM:
-        return jsonify({"status": "LIMITADOR ATIVO", "ignicao": False, "rpm": rpm, "motivo": "Giro Máximo Excedido"})
-
-    if rpm <= 0:
-        return jsonify({"status": "MOTOR DESLIGADO", "ignicao": False, "rpm": rpm})
-
-    periodo_us = 60000000 / rpm
-    avanco_graus = get_advance_from_map(rpm)
-    
-    avanco_us = (avanco_graus / 360.0) * periodo_us
-    atraso_centelha_us = periodo_us - avanco_us
-
-    if atraso_centelha_us < 80:
-        atraso_centelha_us = 80
-
-    return jsonify({
-        "status": "MOTOR RODANDO",
-        "ignicao": True,
-        "rpm_atual": rpm,
-        "avanco_calculado_graus": round(avanco_graus, 2),
-        "tempo_de_uma_volta_us": round(periodo_us, 0),
-        "tempo_espera_ignicao_us": round(atraso_centelha_us, 0),
-        "tempo_carga_bobina_dwell_us": DWELL_US
-    })
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
