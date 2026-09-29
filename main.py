@@ -7,18 +7,21 @@ app = Flask(__name__)
 DWELL_US = 3000
 MAX_RPM = 11000
 
-# MAPA DE AVANÇO ORIGINAL
+# MAPA DE AVANÇO ORIGINAL (Corrigido e restaurado)
 rpmMap = [1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000]
 advanceMap = [12.0, 18.0, 22.0, 25.0, 26.0, 25.0, 20.0, 16.0]
 
 def get_advance_from_map(rpm):
+    # Proteção para rotações abaixo do mínimo do mapa
     if rpm <= rpmMap[0]:
         return advanceMap[0]
+    # Proteção para rotações acima do máximo do mapa
     if rpm >= rpmMap[-1]:
         return advanceMap[-1]
         
     for i in range(len(rpmMap) - 1):
         if rpmMap[i] <= rpm <= rpmMap[i+1]:
+            # Interpolação linear idêntica ao algoritmo em C++ do ESP32
             ratio = (rpm - rpmMap[i]) / (rpmMap[i+1] - rpmMap[i])
             return advanceMap[i] + ratio * (advanceMap[i+1] - advanceMap[i])
     return advanceMap[0]
@@ -51,7 +54,7 @@ HTML_INTERFACE = """
             position: relative;
         }
 
-        /* Imagem de fundo: Protótipo de Arrancada Técnico/Translucido */
+        /* Imagem de fundo: Protótipo de Arrancada Técnico/Translúcido */
         body::before {
             content: "";
             position: fixed;
@@ -63,7 +66,7 @@ HTML_INTERFACE = """
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.09; /* Totalmente translúcido e discreto */
+            opacity: 0.09;
             z-index: 1;
             pointer-events: none;
         }
@@ -153,7 +156,6 @@ HTML_INTERFACE = """
             transform: scale(1.2);
         }
 
-        /* Grid inputs modo automático */
         .auto-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -197,7 +199,6 @@ HTML_INTERFACE = """
         .btn.stop { background: #da3633; }
         .btn.stop:hover { background: #f85149; }
 
-        /* Resultados */
         .results {
             background: rgba(1, 4, 9, 0.7);
             border-radius: 12px;
@@ -314,5 +315,3 @@ HTML_INTERFACE = """
             }
             
             fetch(`/simular?rpm=${rpm}`)
-                .then(response => response.json())
-                .then(data => {
