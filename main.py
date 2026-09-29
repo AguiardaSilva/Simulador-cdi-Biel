@@ -54,7 +54,7 @@ HTML_INTERFACE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador CDI - Protótipo Arrancada 2T</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://jsdelivr.net"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -91,7 +91,7 @@ HTML_INTERFACE = """
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-image: url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1920&q=80');
+            background-image: url('https://unsplash.com');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
