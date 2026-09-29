@@ -43,31 +43,52 @@ HTML_INTERFACE = """
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: #0b0e14;
             color: #c9d1d9;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
+            width: 100vw;
             min-height: 100vh;
-            padding: 20px 0;
             overflow-y: auto;
+            overflow-x: hidden;
             position: relative;
         }
 
-        /* Imagem de fundo: Protótipo de Arrancada Técnico/Translúcido */
+        /* Imagem de fundo em tela cheia: Moto de Arrancada (Drag Bike) */
         body::before {
             content: "";
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://freepik.com');
-            background-size: contain;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
             background-repeat: no-repeat;
-            background-position: center;
-            opacity: 0.09;
+            background-position: center center;
+            background-attachment: fixed;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Camada de sobreposição escura para garantir legibilidade do conteúdo */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(180deg, rgba(6, 8, 12, 0.75) 0%, rgba(6, 8, 12, 0.65) 50%, rgba(6, 8, 12, 0.8) 100%);
             z-index: 1;
             pointer-events: none;
         }
@@ -75,18 +96,31 @@ HTML_INTERFACE = """
         .container {
             position: relative;
             z-index: 2;
-            background: rgba(17, 22, 30, 0.9);
+            background: rgba(17, 22, 30, 0.85);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(56, 139, 253, 0.2);
             border-radius: 20px;
             padding: 30px;
-            width: 92%;
+            width: 100%;
             max-width: 550px;
+            margin: 20px auto;
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(88, 166, 255, 0.05);
         }
 
         .container.with-charts {
             max-width: 900px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 18px;
+                border-radius: 12px;
+                margin: 10px auto;
+            }
+
+            body::before {
+                background-attachment: scroll;
+            }
         }
 
         .charts-grid {
